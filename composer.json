@@ -1,5 +1,5 @@
 {
-    "name": "iit/yii2-mongodb-rabc",
+    "name": "iit/yii2-rabc-mongodb",
     "description": "Yii2使用mongodb做为数据源的rabc管理器",
     "type": "yii2-extension",
     "version": "1.0.0",

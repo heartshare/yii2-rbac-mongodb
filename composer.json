@@ -1,6 +1,6 @@
 {
     "name": "iit/yii2-rbac-mongodb",
-    "description": "Yii2使用mongodb做为数据源的rabc管理器",
+    "description": "Yii2使用mongodb做为数据源的rbac管理器",
     "type": "yii2-extension",
     "version": "1.0.0",
     "license": "MIT",

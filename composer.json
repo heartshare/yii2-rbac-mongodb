@@ -1,5 +1,5 @@
 {
-    "name": "iit/yii2-rabc-mongodb",
+    "name": "iit/yii2-rbac-mongodb",
     "description": "Yii2使用mongodb做为数据源的rabc管理器",
     "type": "yii2-extension",
     "version": "1.0.0",
@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "yii\\rabc\\": ""
+            "yii\\rbac\\": ""
         }
     }
 }

@@ -12,6 +12,7 @@ use Yii;
 use yii\base\InvalidCallException;
 use yii\base\InvalidParamException;
 use yii\db\Expression;
+use yii\di\Instance;
 use yii\mongodb\Connection;
 use yii\mongodb\Query;
 
@@ -28,19 +29,27 @@ class MongodbManager extends BaseManager
     /**
      * @var string the name of the table storing authorization items. Defaults to "auth_item".
      */
-    public $itemTable = '{{%auth_item}}';
+    public $itemTable = 'auth_item';
     /**
      * @var string the name of the table storing authorization item hierarchy. Defaults to "auth_item_child".
      */
-    public $itemChildTable = '{{%auth_item_child}}';
+    public $itemChildTable = 'auth_item_child';
     /**
      * @var string the name of the table storing authorization item assignments. Defaults to "auth_assignment".
      */
-    public $assignmentTable = '{{%auth_assignment}}';
+    public $assignmentTable = 'auth_assignment';
     /**
      * @var string the name of the table storing rules. Defaults to "auth_rule".
      */
-    public $ruleTable = '{{%auth_rule}}';
+    public $ruleTable = 'auth_rule';
+
+    public function init()
+    {
+        parent::init();
+        $this->db = Instance::ensure($this->db, Connection::className());
+        $this->db->getCollection($this->itemTable)->createIndex(['name' => 1], ['unique' => true]);
+        $this->db->getCollection($this->ruleTable)->createIndex(['name' => 1], ['unique' => true]);
+    }
 
     /**
      * Returns the named auth item.
@@ -290,7 +299,7 @@ class MongodbManager extends BaseManager
         $temp = $query->select(['parent'])
             ->from($this->itemChildTable)
             ->where(['child' => $itemName]);
-        foreach ($temp as $item) {
+        foreach ($temp->all($this->db) as $item) {
             $parents[] = $item['parent'];
         }
         foreach ($parents as $parent) {
@@ -366,7 +375,7 @@ class MongodbManager extends BaseManager
             return [];
         }
 
-        $query = (new Query)->select('item_name')
+        $query = (new Query)->select(['item_name'])
             ->from($this->assignmentTable)
             ->where(['user_id' => (string)$userId]);
         $temp = [];
@@ -563,17 +572,18 @@ class MongodbManager extends BaseManager
     public function assign($role, $userId)
     {
         $assignment = new Assignment([
-            'userId' => $userId,
+            'userId' => (string)$userId,
             'roleName' => $role->name,
             'createdAt' => time(),
         ]);
-
-        $this->db->getCollection($this->assignmentTable)
-            ->insert([
-                'user_id' => $assignment->userId,
-                'item_name' => $assignment->roleName,
-                'created_at' => $assignment->createdAt,
-            ]);
+        if (!(new Query())->from($this->assignmentTable)->where(['user_id' => $assignment->userId, 'item_name' => $assignment->roleName])->one($this->db)) {
+            $this->db->getCollection($this->assignmentTable)
+                ->insert([
+                    'user_id' => $assignment->userId,
+                    'item_name' => $assignment->roleName,
+                    'created_at' => $assignment->createdAt,
+                ]);
+        }
 
         return $assignment;
     }
@@ -653,7 +663,6 @@ class MongodbManager extends BaseManager
         $query = (new Query)
             ->from($this->assignmentTable)
             ->where(['user_id' => (string)$userId]);
-
         $assignments = [];
         foreach ($query->all($this->db) as $row) {
             $assignments[$row['item_name']] = new Assignment([

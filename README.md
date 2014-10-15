@@ -1,7 +1,7 @@
 #安装方法
 在项目的`composer.json`文件的`require`里面加入下列代码
 
-```php
+```json
 "require": {
         "iit/yii2-rbac-mongodb": "*",
     },
